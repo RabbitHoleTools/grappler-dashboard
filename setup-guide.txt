@@ -3,52 +3,35 @@
 ║   Your BJJ Training Log              ║
 ╚══════════════════════════════════════╝
 
-Thank you for your purchase! This guide will help you get set up in 2 minutes.
+Thank you for your purchase! This guide will get you set up in 1 minute.
 
 ────────────────────────────────────────
-  WHAT YOU DOWNLOADED
+  QUICK START
 ────────────────────────────────────────
 
-You received 2 files:
-• grappler-dashboard.html  ← The dashboard itself
-• setup-guide.txt          ← This guide (you're reading it)
+STEP 1: Open this link in your browser
+  → https://rabbitholetools.github.io/grappler-dashboard/
 
-────────────────────────────────────────
-  📱 ON YOUR PHONE (iPhone / Android)
-────────────────────────────────────────
+  (Tap it on your phone or type it on your computer)
 
-STEP 1: Open the file in your browser
+STEP 2: Add it to your home screen (optional but recommended)
 
-  • Go to your Downloads or Files folder
-  • Tap "grappler-dashboard.html"
-  • Choose "Open in Safari" (iPhone) or "Open in Chrome" (Android)
-  
-  ⚠️ IMPORTANT: Open in your browser, NOT in the Files app.
-     Files app preview doesn't run the dashboard properly.
+  📱 ON iPHONE:
+    1. Tap the Share button ⎙ (bottom of screen)
+    2. Scroll down and tap "Add to Home Screen"
+    3. Tap "Add" (top right)
+    4. ✅ The dashboard icon appears on your phone
 
-STEP 2: Install it like an app
+  📱 ON ANDROID:
+    1. Tap the three-dot menu ⋮ in Chrome
+    2. Tap "Add to Home screen"
+    3. Tap "Add"
+    4. ✅ The dashboard icon appears on your phone
 
-  ON iPHONE:
-  1. Tap the Share button ⎙ (the square with arrow) at the bottom
-  2. Scroll down and tap "Add to Home Screen"
-  3. Tap "Add" (top right)
-  4. ✅ The dashboard icon appears on your home screen
+  💻 ON COMPUTER:
+    Just bookmark the link. Works on any browser.
 
-  ON ANDROID:
-  1. Tap the three-dot menu ⋮ in Chrome
-  2. Tap "Add to Home screen"
-  3. Tap "Add"
-  4. ✅ The dashboard icon appears on your home screen
-
-That's it. Now it opens full-screen like a real app. 
-All your data saves to your phone automatically.
-
-────────────────────────────────────────
-  💻 ON YOUR COMPUTER
-────────────────────────────────────────
-
-Just double-click "grappler-dashboard.html" and it opens in your browser.
-Works on Windows, Mac, and Linux.
+That's it. No files to download. No setup. Just tap and go.
 
 ────────────────────────────────────────
   ✨ HOW TO USE IT
@@ -56,37 +39,30 @@ Works on Windows, Mac, and Linux.
 
 📊 DASHBOARD TAB — See your stats
   Total sessions, submissions, mat time, weekly chart.
-  Tap any session to delete it.
 
 ✏️ LOG TAB — Log a training session
-  Tap the session type, duration, intensity, enter your subs.
-  Takes about 10 seconds. Data saves automatically.
+  Tap session type, duration, intensity, enter your subs.
+  Data saves automatically to your phone.
 
 📚 TECHNIQUES TAB — Build your technique library
   Add techniques with category and difficulty.
-  Mark which ones are "Part of My Game."
 
 ⚙️ MORE TAB — Goals, Weight, Backups
-  Set training goals. Track weight and wellness.
   Use ⬇ Export to back up. Use ⬆ Import to restore.
 
 ────────────────────────────────────────
   💾 ABOUT YOUR DATA
 ────────────────────────────────────────
 
-All your data is saved on YOUR device — not in the cloud.
+All data stays on YOUR device — not in the cloud.
 • Close the page? Data stays.
-• Clear browser history? Data stays (it's in local storage).
 • Get a new phone? Use ⬇ Export to save a backup file,
   transfer it to your new phone, and tap ⬆ Import.
-
-To back up: Tap the ⬇ button (top right) → saves a .json file
-To restore: Tap the ⬆ button (top right) → pick your backup file
 
 ────────────────────────────────────────
   ❓ NEED HELP?
 ────────────────────────────────────────
 
-Message me on Etsy. I'm happy to help you get set up.
+Message me on Etsy. Happy to help.
 
 Oss! 🥋
