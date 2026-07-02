@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Grappler Dashboard — BJJ Training Log</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f0f;--surface:#1a1a1a;--card:#222;--card-hover:#2a2a2a;--border:#333;--text:#eee;--text-dim:#888;--accent:#e63946;--accent-dim:#b71c1c;--green:#2ecc71;--yellow:#f1c40f;--blue:#3498db;--orange:#e67e22;--radius:14px;--radius-sm:10px;--shadow:0 2px 12px rgba(0,0,0,.3);--safe-bottom:env(safe-area-inset-bottom,0px);--bar-height:56px;--header-height:48px}
+html,body{height:100%;min-height:100dvh;min-height:-webkit-fill-available;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent}
+#app{display:flex;flex-direction:column;height:100dvh;height:-webkit-fill-available;max-width:480px;margin:0 auto;position:relative;overflow:hidden}
+header{height:var(--header-height);display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+header h1{font-size:16px;font-weight:700;letter-spacing:-.2px}
+header h1 span{color:var(--accent)}
+.header-actions{display:flex;gap:4px}
+.header-btn{width:34px;height:34px;border-radius:50%;border:none;background:var(--card);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.header-btn:active{transform:scale(.9);background:var(--card-hover)}
+#content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:10px 14px calc(var(--bar-height) + var(--safe-bottom) + 10px)}
+.page{display:none;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+#tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:calc(var(--bar-height) + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:20}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;color:var(--text-dim);transition:.15s;border:none;background:none;font-family:inherit;font-size:9px;letter-spacing:.2px;padding:3px 0}
+.tab .tab-icon{font-size:20px;line-height:1}
+.tab.active{color:var(--accent)}
+.tab:active{opacity:.6}
+.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.card-title{font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat-box{background:var(--card);border-radius:var(--radius-sm);padding:10px 4px;text-align:center}
+.stat-box .stat-val{font-size:20px;font-weight:800;line-height:1.2}
+.stat-box .stat-val.accent{color:var(--accent)}
+.stat-box .stat-val.green{color:var(--green)}
+.stat-box .stat-val.blue{color:var(--blue)}
+.stat-box .stat-val.yellow{color:var(--yellow)}
+.stat-box .stat-label{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.chart-wrap{height:56px;display:flex;align-items:flex-end;gap:3px;padding-top:4px}
+.chart-bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;background:var(--accent);opacity:.7;position:relative}
+.chart-bar .bar-label{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:7px;color:var(--text-dim);white-space:nowrap}
+.session-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.session-item:last-child{border-bottom:none}
+.session-type{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.session-type.gi{background:#1a3a5c}
+.session-type.nogi{background:#4a0e0e}
+.session-type.wrestling{background:#3d2b1f}
+.session-type.drilling{background:#2d4a2d}
+.session-type.openmat{background:#4a2d4a}
+.session-type.conditioning{background:#2d3d4a}
+.session-info{flex:1;min-width:0}
+.session-info .s-date{font-size:11px;color:var(--text-dim)}
+.session-info .s-detail{font-size:13px;font-weight:500}
+.session-stats{display:flex;gap:6px;align-items:center}
+.session-stats .s-stat{font-size:13px;font-weight:700}
+.session-stats .s-stat.taps{color:var(--green)}
+.session-stats .s-stat.tapped{color:var(--accent)}
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
+.form-input,.form-select{width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:.15s;-webkit-appearance:none}
+.form-input:focus,.form-select:focus{border-color:var(--accent)}
+.form-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+textarea.form-input{resize:vertical;min-height:50px;font-family:inherit}
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.quick-btn{padding:8px 4px;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:12px;font-weight:500;text-align:center;cursor:pointer;transition:.12s;font-family:inherit}
+.quick-btn:active{transform:scale(.95)}
+.quick-btn.selected{border-color:var(--accent);background:rgba(230,57,70,.15);color:var(--accent)}
+.btn-primary{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit}
+.btn-primary:active{transform:scale(.97);background:var(--accent-dim)}
+.btn-secondary{width:100%;padding:10px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:6px}
+.btn-secondary:active{background:var(--card-hover)}
+.tech-card{background:var(--card);border-radius:var(--radius-sm);padding:12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.tech-card .tech-name{font-weight:600;font-size:14px}
+.tech-card .tech-meta{font-size:11px;color:var(--text-dim);margin-top:2px}
+.tech-badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600}
+.tech-badge.beginner{background:rgba(46,204,113,.2);color:var(--green)}
+.tech-badge.intermediate{background:rgba(241,196,15,.2);color:var(--yellow)}
+.tech-badge.advanced{background:rgba(230,57,70,.2);color:var(--accent)}
+.goal-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.goal-item:last-child{border-bottom:none}
+.goal-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.goal-status.in-progress{background:var(--yellow)}
+.goal-status.achieved{background:var(--green)}
+.goal-status.abandoned{background:var(--text-dim)}
+.goal-info{flex:1}
+.goal-info .g-name{font-size:13px;font-weight:500}
+.goal-info .g-meta{font-size:11px;color:var(--text-dim)}
+.filter-tabs{display:flex;gap:5px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}
+.filter-tab{padding:5px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:.12s;flex-shrink:0}
+.filter-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+#toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);padding:8px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:100;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+.empty-state{text-align:center;padding:30px 20px;color:var(--text-dim)}
+.empty-state .empty-icon{font-size:40px;margin-bottom:10px}
+.empty-state .empty-text{font-size:14px;line-height:1.5}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:50;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border-radius:var(--radius);padding:20px;width:100%;max-width:340px;max-height:80vh;overflow-y:auto}
+.modal h3{font-size:16px;margin-bottom:14px;font-weight:700}
+.modal-actions{display:flex;gap:8px;margin-top:14px}
+.modal-actions .btn-primary,.modal-actions .btn-secondary{margin-top:0}
+.weight-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.weight-row:last-child{border-bottom:none}
+.weight-row .w-date{color:var(--text-dim);font-size:11px}
+.weight-row .w-val{font-weight:600}
+/* Install guide card */
+.install-card{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:var(--radius);padding:16px;margin-bottom:10px;text-align:center}
+.install-card .app-icon{font-size:36px;margin-bottom:6px}
+.install-card h2{font-size:18px;font-weight:700;margin-bottom:4px}
+.install-card p{font-size:13px;color:var(--text-dim);margin-bottom:10px;line-height:1.5}
+.install-card .step-list{text-align:left;background:rgba(0,0,0,.2);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px}
+.install-card .step-list .step{display:flex;gap:10px;padding:6px 0;font-size:13px;color:var(--text);line-height:1.4}
+.install-card .step-list .step-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.install-card .btn-install{background:var(--accent);color:#fff;border:none;border-radius:20px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+/* File protocol warning */
+.file-warning{background:var(--accent);color:#fff;padding:14px;border-radius:var(--radius);margin-bottom:10px;text-align:center;line-height:1.6;font-size:13px}
+.file-warning .fw-icon{font-size:32px;margin-bottom:6px}
+.file-warning .fw-title{font-weight:700;font-size:15px;margin-bottom:4px}
+.file-warning .fw-btn{background:#fff;color:var(--accent);border:none;border-radius:20px;padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit}
+#content::-webkit-scrollbar{width:0}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Grappler <span>Dashboard</span></h1>
+    <div class="header-actions">
+      <button class="header-btn" onclick="exportData()" title="Back up your data">⬇</button>
+      <button class="header-btn" onclick="document.getElementById('importFile').click()" title="Restore from backup">⬆</button>
+    </div>
+  </header>
+
+  <div id="content">
+    <div id="page-dashboard" class="page active"></div>
+    <div id="page-log" class="page">
+      <div class="card">
+        <div class="card-title">Log a Session</div>
+        <div class="form-group">
+          <label class="form-label">What kind of training?</label>
+          <div class="quick-grid" id="log-type">
+            <button class="quick-btn" data-value="Gi BJJ" onclick="selectQuick(this,'log-type')">🥋 Gi</button>
+            <button class="quick-btn" data-value="No-Gi BJJ" onclick="selectQuick(this,'log-type')">💪 No-Gi</button>
+            <button class="quick-btn" data-value="Wrestling" onclick="selectQuick(this,'log-type')">🤼 Wrestling</button>
+            <button class="quick-btn" data-value="Drilling" onclick="selectQuick(this,'log-type')">🎯 Drilling</button>
+            <button class="quick-btn" data-value="Open Mat" onclick="selectQuick(this,'log-type')">🔄 Open Mat</button>
+            <button class="quick-btn" data-value="Conditioning" onclick="selectQuick(this,'log-type')">🏋️ Conditioning</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="log-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duration</label>
+          <select class="form-select" id="log-duration">
+            <option>30 min</option><option>45 min</option><option selected>60 min</option>
+            <option>75 min</option><option>90 min</option><option>120 min</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Intensity</label>
+          <div class="quick-grid" id="log-intensity">
+            <button class="quick-btn" data-value="Light" onclick="selectQuick(this,'log-intensity')">😮‍💨 Light</button>
+            <button class="quick-btn selected" data-value="Moderate" onclick="selectQuick(this,'log-intensity')">😤 Moderate</button>
+            <button class="quick-btn" data-value="Intense" onclick="selectQuick(this,'log-intensity')">🔥 Intense</button>
+            <button class="quick-btn" data-value="Competition" onclick="selectQuick(this,'log-intensity')">🏆 Comp</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Position Focus</label>
+          <select class="form-select" id="log-position">
+            <option>Guard</option><option>Passing</option><option>Side Control</option>
+            <option>Mount</option><option>Back Control</option><option>Takedowns</option>
+            <option>Half Guard</option><option>Leg Locks</option><option>Turtle</option>
+            <option>General / All</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div class="form-group">
+            <label class="form-label">Rounds</label>
+            <input type="number" class="form-input" id="log-rounds" value="6" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Submissions (got)</label>
+            <input type="number" class="form-input" id="log-taps" value="0" min="0">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div class="form-group">
+            <label class="form-label">Got Submitted</label>
+            <input type="number" class="form-input" id="log-tapped" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rolling Partner</label>
+            <input type="text" class="form-input" id="log-partner" placeholder="Name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Techniques You Worked On</label>
+          <textarea class="form-input" id="log-techniques" placeholder="e.g. Armbar from guard, scissor sweep" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-input" id="log-notes" placeholder="How did the session feel? What went well?" rows="2"></textarea>
+        </div>
+        <button class="btn-primary" onclick="logSession()">💪 Log This Session</button>
+      </div>
+    </div>
+
+    <div id="page-techniques" class="page"></div>
+    <div id="page-more" class="page"></div>
+  </div>
+
+  <div id="tabs">
+    <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">
+      <span class="tab-icon">📊</span> Dashboard
+    </button>
+    <button class="tab" data-tab="log" onclick="switchTab('log')">
+      <span class="tab-icon">✏️</span> Log
+    </button>
+    <button class="tab" data-tab="techniques" onclick="switchTab('techniques')">
+      <span class="tab-icon">📚</span> Techniques
+    </button>
+    <button class="tab" data-tab="more" onclick="switchTab('more')">
+      <span class="tab-icon">⚙️</span> More
+    </button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// ===== DATA =====
+const DB_KEY = 'grappler_db';
+const WELCOME_KEY = 'grappler_welcomed';
+
+function getDB() {
+  try { const r = localStorage.getItem(DB_KEY); if (r) return JSON.parse(r); } catch(e) {}
+  return { sessions: [], techniques: [], goals: [], weightEntries: [] };
+}
+function saveDB(db) {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch(e) { console.warn('Storage unavailable', e); }
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+// ===== SAMPLE DATA (shows what the dashboard looks like) =====
+function loadSamples() {
+  const db = getDB();
+  if (db.sessions.length > 0) return;
+  const d = (n) => Date.now() - 86400000 * n;
+  db.sessions = [
+    {id:genId(),type:'Wrestling',date:'2026-06-28',duration:90,intensity:'Intense',rounds:8,tapsGot:2,tapped:1,position:'Takedowns',partner:'Mike',techniques:'Single leg finish, ankle pick',notes:'',timestamp:d(27)},
+    {id:genId(),type:'Gi BJJ',date:'2026-06-30',duration:90,intensity:'Moderate',rounds:6,tapsGot:3,tapped:0,position:'Guard',partner:'Carlos',techniques:'Lasso guard sweep, triangle from spider',notes:'Good flow',timestamp:d(25)},
+    {id:genId(),type:'No-Gi BJJ',date:'2026-07-02',duration:90,intensity:'Competition',rounds:10,tapsGot:1,tapped:2,position:'Back Control',partner:'Rory',techniques:'RNC from body triangle',notes:'Got caught in a heel hook',timestamp:d(23)},
+    {id:genId(),type:'Wrestling',date:'2026-07-05',duration:75,intensity:'Intense',rounds:7,tapsGot:0,tapped:3,position:'Takedowns',partner:'Mike',techniques:'Arm drag to single',notes:'',timestamp:d(20)},
+    {id:genId(),type:'No-Gi BJJ',date:'2026-07-07',duration:90,intensity:'Moderate',rounds:6,tapsGot:4,tapped:0,position:'Half Guard',partner:'Jay',techniques:'Deep half sweep, waiter sweep',notes:'Felt great',timestamp:d(18)},
+    {id:genId(),type:'Gi BJJ',date:'2026-07-09',duration:90,intensity:'Light',rounds:5,tapsGot:2,tapped:1,position:'Passing',partner:'Carlos',techniques:'Toreando pass, leg drag',notes:'',timestamp:d(16)},
+    {id:genId(),type:'Wrestling',date:'2026-07-12',duration:90,intensity:'Intense',rounds:8,tapsGot:1,tapped:2,position:'Takedowns',partner:'Mike',techniques:'High crotch, sweep single',notes:'Legs feeling heavy',timestamp:d(13)},
+    {id:genId(),type:'No-Gi BJJ',date:'2026-07-14',duration:90,intensity:'Intense',rounds:8,tapsGot:3,tapped:2,position:'Leg Locks',partner:'Rory',techniques:'Straight ankle lock, knee bar entry',notes:'',timestamp:d(11)},
+    {id:genId(),type:'Gi BJJ',date:'2026-07-16',duration:90,intensity:'Moderate',rounds:6,tapsGot:2,tapped:1,position:'Guard',partner:'Carlos',techniques:'Collar sleeve sweep',notes:'',timestamp:d(9)},
+    {id:genId(),type:'Wrestling',date:'2026-07-19',duration:75,intensity:'Competition',rounds:10,tapsGot:0,tapped:0,position:'Takedowns',partner:'Mike',techniques:'Underhook to single',notes:'Great sparring',timestamp:d(6)},
+    {id:genId(),type:'Drilling',date:'2026-07-22',duration:60,intensity:'Light',rounds:0,tapsGot:0,tapped:0,position:'Mount',partner:'',techniques:'Mount escapes: elbow escape, bridge roll',notes:'Focused drilling only',timestamp:d(3)},
+    {id:genId(),type:'No-Gi BJJ',date:'2026-07-24',duration:90,intensity:'Intense',rounds:8,tapsGot:2,tapped:3,position:'Back Control',partner:'Rory',techniques:'Bow and arrow, clock choke',notes:'Good rounds',timestamp:d(1)},
+  ];
+  db.techniques = [
+    {id:genId(),name:'Closed Guard Armbar',category:'Submissions',difficulty:'Beginner',partOfMyGame:true},
+    {id:genId(),name:'Scissor Sweep',category:'Sweeps',difficulty:'Beginner',partOfMyGame:true},
+    {id:genId(),name:'Triangle Choke',category:'Submissions',difficulty:'Intermediate',partOfMyGame:true},
+    {id:genId(),name:'Berimbolo',category:'Sweeps',difficulty:'Advanced',partOfMyGame:false},
+    {id:genId(),name:'Single Leg Takedown',category:'Takedowns',difficulty:'Beginner',partOfMyGame:true},
+    {id:genId(),name:'Toreando Pass',category:'Passing',difficulty:'Intermediate',partOfMyGame:true},
+    {id:genId(),name:'Rear Naked Choke',category:'Submissions',difficulty:'Beginner',partOfMyGame:true},
+    {id:genId(),name:'Elbow Escape - Mount',category:'Escapes',difficulty:'Beginner',partOfMyGame:true},
+    {id:genId(),name:'Straight Ankle Lock',category:'Leg Locks',difficulty:'Intermediate',partOfMyGame:false},
+    {id:genId(),name:'Knee Cut Pass',category:'Passing',difficulty:'Beginner',partOfMyGame:true},
+  ];
+  db.goals = [
+    {id:genId(),name:'Get blue belt by end of year',category:'Rank Progression',status:'In Progress'},
+    {id:genId(),name:'Compete at local tournament',category:'Competition',status:'In Progress'},
+    {id:genId(),name:'Master berimbolo to back take',category:'Technique',status:'In Progress'},
+    {id:genId(),name:'Hit 50 subs in rolls this year',category:'Technique',status:'In Progress'},
+    {id:genId(),name:'100 sessions this year',category:'Consistency',status:'In Progress'},
+  ];
+  saveDB(db);
+}
+
+// ===== UTILITIES =====
+function getTypeEmoji(t) { return {'Gi BJJ':'🥋','No-Gi BJJ':'💪','Wrestling':'🤼','Drilling':'🎯','Open Mat':'🔄','Conditioning':'🏋️'}[t]||'🥋'; }
+function getTypeClass(t) { return {'Gi BJJ':'gi','No-Gi BJJ':'nogi','Wrestling':'wrestling','Drilling':'drilling','Open Mat':'openmat','Conditioning':'conditioning'}[t]||'gi'; }
+function dayName(d) { return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d+'T12:00:00').getDay()]; }
+
+// ===== WELCOME SCREEN =====
+function showWelcome() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+  const platform = isIOS ? 'iPhone' : isAndroid ? 'Android' : 'phone';
+
+  showModal(`
+    <div style="text-align:center">
+      <div style="font-size:48px;margin-bottom:10px">🥋</div>
+      <h3 style="margin-bottom:6px">Welcome to Grappler Dashboard</h3>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.5">
+        Your BJJ training log. Works entirely on this device — no account, no internet, no server.
+      </p>
+    </div>
+    <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text)">📱 To use it like an app:</div>
+      <div style="font-size:13px;color:var(--text-dim);line-height:1.6">
+        <b>1.</b> Tap the Share button <span style="font-size:16px">${isIOS ? '⎙' : '⋮'}</span> in your browser<br>
+        <b>2.</b> Scroll down and tap <b>"Add to Home Screen"</b><br>
+        <b>3.</b> Tap <b>"Add"</b> (top right)<br><br>
+        It will appear as an icon on your home screen and open full-screen like a real app.
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:14px;line-height:1.4">
+      💾 All your data is saved on this device. Use the ⬇ and ⬆ buttons in the top right to back up or transfer your data.
+    </div>
+    <button class="btn-primary" onclick="hideModal();showInstallConfirm()">Let's Go! 💪</button>
+  `);
+}
+
+function showInstallConfirm() {
+  try { localStorage.setItem(WELCOME_KEY, '1'); } catch(e) {}
+}
+
+function isFirstTime() {
+  try { return !localStorage.getItem(WELCOME_KEY); } catch(e) { return false; }
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const db = getDB();
+  const s = db.sessions;
+  const total = s.length;
+  const totalTaps = s.reduce((a,x)=>a+(x.tapsGot||0),0);
+  const totalTapped = s.reduce((a,x)=>a+(x.tapped||0),0);
+  const totalMin = s.reduce((a,x)=>a+(x.duration||0),0);
+  const hours = Math.round(totalMin/60);
+  const subsPerSession = total > 0 ? (totalTaps/total).toFixed(1) : '0';
+  const tapRatio = totalTapped > 0 ? (totalTaps/totalTapped).toFixed(1) : totalTaps+'';
+  const thisWeek = s.filter(x => { if(!x.date) return false; const d=new Date(x.date+'T12:00:00'); const n=new Date(); const w=new Date(n); w.setDate(n.getDate()-n.getDay()+1); return d>=w; });
+  const weekSessions = thisWeek.length;
+  const weekTaps = thisWeek.reduce((a,x)=>a+(x.tapsGot||0),0);
+
+  // Weekly chart
+  const weeks = {};
+  s.forEach(x => { if(!x.date) return; const d=new Date(x.date+'T12:00:00'); const m=new Date(d); m.setDate(d.getDate()-d.getDay()+1); const k=m.toISOString().slice(5,10); weeks[k]=(weeks[k]||0)+(x.duration||0); });
+  const wk = Object.keys(weeks).sort().slice(-6);
+  const wv = wk.map(k => weeks[k]||0);
+  const mx = Math.max(...wv, 1);
+  const bars = wk.map((k,i) => `<div class="chart-bar" style="height:${Math.max(4,(wv[i]/mx)*52)}px"><span class="bar-label">${k}</span></div>`).join('');
+
+  // Recent sessions
+  const recent = [...s].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,8);
+  const recentHtml = recent.map(x => `
+    <div class="session-item" onclick="if(confirm('Delete this session?')){deleteSession('${x.id}')}" style="cursor:pointer">
+      <div class="session-type ${getTypeClass(x.type)}">${getTypeEmoji(x.type)}</div>
+      <div class="session-info">
+        <div class="s-date">${dayName(x.date)} ${x.date} · ${x.duration}min · ${x.intensity}</div>
+        <div class="s-detail">${x.type} · ${x.position||''}</div>
+      </div>
+      <div class="session-stats">
+        <span class="s-stat taps">+${x.tapsGot||0}</span>
+        <span class="s-stat tapped">-${x.tapped||0}</span>
+      </div>
+    </div>
+  `).join('');
+
+  const hasData = total > 0;
+
+  document.getElementById('page-dashboard').innerHTML = `
+    <div class="install-card">
+      <div class="app-icon">🥋</div>
+      <h2>Grappler Dashboard</h2>
+      <p>Your BJJ training log. Tap ✏️ Log below to log your first session.</p>
+      <div class="step-list">
+        <div class="step"><span class="step-num">1</span> <span>Log every session — type, duration, submissions, notes</span></div>
+        <div class="step"><span class="step-num">2</span> <span>See your stats grow on this dashboard</span></div>
+        <div class="step"><span class="step-num">3</span> <span>Track techniques, set goals, monitor your weight</span></div>
+      </div>
+      <button class="btn-install" onclick="showInstallHelp()">📱 Add to Home Screen →</button>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-val accent">${total}</div><div class="stat-label">Sessions</div></div>
+      <div class="stat-box"><div class="stat-val green">${totalTaps}</div><div class="stat-label">Subs +</div></div>
+      <div class="stat-box"><div class="stat-val blue">${hours}h</div><div class="stat-label">Mat Time</div></div>
+      <div class="stat-box"><div class="stat-val yellow">${subsPerSession}</div><div class="stat-label">Sub/Session</div></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-val accent">${totalTapped}</div><div class="stat-label">Tapped -</div></div>
+      <div class="stat-box"><div class="stat-val green">${tapRatio}</div><div class="stat-label">Ratio</div></div>
+      <div class="stat-box"><div class="stat-val blue">${weekSessions}</div><div class="stat-label">This Week</div></div>
+      <div class="stat-box"><div class="stat-val yellow">${weekTaps}</div><div class="stat-label">Wk Subs</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Weekly Mat Time</div>
+      <div class="chart-wrap">${bars}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recent Sessions <span style="font-weight:400;text-transform:none;font-size:10px;">(tap to delete)</span></div>
+      ${hasData ? recentHtml : '<div class="empty-state"><div class="empty-icon">🥋</div><div class="empty-text">No sessions yet. Head over to the Log tab and log your first training session!</div></div>'}
+    </div>
+    <div class="card" style="font-size:11px;color:var(--text-dim);text-align:center;line-height:1.5">
+      💾 Your data is saved on this device.<br>
+      Tap ⬇ to back up · Tap ⬆ to restore
+    </div>
+  `;
+}
+
+// ===== TECHNIQUES =====
+function renderTechniques() {
+  const db = getDB();
+  const techs = db.techniques || [];
+  const cats = ['All', ...new Set(techs.map(t=>t.category))];
+  const filterHtml = cats.map(c => `<button class="filter-tab${c==='All'?' active':''}" data-cat="${c}" onclick="filterTechs('${c}')">${c}</button>`).join('');
+  const listHtml = techs.map(t => `
+    <div class="tech-card" data-cat="${t.category}">
+      <div>
+        <div class="tech-name">${t.name} ${t.partOfMyGame?'⭐':''}</div>
+        <div class="tech-meta">${t.category}</div>
+      </div>
+      <span class="tech-badge ${t.difficulty.toLowerCase()}">${t.difficulty}</span>
+    </div>
+  `).join('') || '<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-text">No techniques yet. Add your first one!</div></div>';
+
+  document.getElementById('page-techniques').innerHTML = `
+    <div class="card">
+      <div class="card-title">Technique Library</div>
+      <div class="form-group">
+        <input type="text" class="form-input" placeholder="🔍 Search techniques..." oninput="searchTechs(this.value)">
+      </div>
+      <div class="filter-tabs">${filterHtml}</div>
+      <div id="tech-list">${listHtml}</div>
+      <button class="btn-secondary" onclick="showAddTech()">+ Add Technique</button>
+    </div>
+  `;
+}
+
+function filterTechs(cat) { document.querySelectorAll('.filter-tab').forEach(t=>t.classList.toggle('active',t.dataset.cat===cat)); document.querySelectorAll('.tech-card').forEach(c=>c.style.display=(cat==='All'||c.dataset.cat===cat)?'':'none'); }
+function searchTechs(val) { const q=val.toLowerCase(); document.querySelectorAll('.tech-card').forEach(c=>{c.style.display=c.querySelector('.tech-name').textContent.toLowerCase().includes(q)?'':'none'}); }
+
+// ===== MORE =====
+function renderMore() {
+  const db = getDB();
+  const goals = db.goals || [];
+  const weightEntries = db.weightEntries || [];
+  const goalHtml = goals.map(g => `
+    <div class="goal-item">
+      <div class="goal-status ${g.status.toLowerCase().replace(' ','-')}"></div>
+      <div class="goal-info">
+        <div class="g-name">${g.name}</div>
+        <div class="g-meta">${g.category} · ${g.status}</div>
+      </div>
+    </div>
+  `).join('') || '<div class="empty-state" style="padding:15px"><div class="empty-text" style="font-size:13px">Set your first goal!</div></div>';
+  const recentW = [...weightEntries].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,5);
+  const wHtml = recentW.length > 0 ? recentW.map(w => `
+    <div class="weight-row">
+      <span class="w-date">${w.date}</span>
+      <span class="w-val">${w.weight} lbs</span>
+      <span style="color:var(--text-dim)">${w.bf ? w.bf+'%' : '-'}</span>
+      <span style="color:var(--text-dim)">${w.sleep ? w.sleep+'h' : '-'}</span>
+      <span style="font-size:10px;color:var(--text-dim)">${w.energy||''}</span>
+    </div>`).join('') : '<div class="empty-state" style="padding:15px"><div class="empty-text" style="font-size:13px">No entries yet.</div></div>';
+  let dbSize = 0;
+  try { const r = localStorage.getItem(DB_KEY); if (r) dbSize = new Blob([r]).size; } catch(e) {}
+  const sizeKb = (dbSize/1024).toFixed(1);
+
+  document.getElementById('page-more').innerHTML = `
+    <div class="card">
+      <div class="card-title">🎯 Goals</div>
+      ${goalHtml}
+      <button class="btn-secondary" onclick="showAddGoal()">+ Add Goal</button>
+    </div>
+    <div class="card">
+      <div class="card-title">⚖️ Weight & Wellness</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
+        <input type="date" class="form-input" id="w-date" value="${todayStr()}" style="font-size:12px;padding:8px 6px">
+        <input type="number" class="form-input" id="w-weight" placeholder="lbs" step="0.1" style="font-size:12px;padding:8px 6px">
+        <button class="btn-primary" onclick="logWeight()" style="padding:8px;font-size:12px">Log</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+        <input type="number" class="form-input" id="w-bf" placeholder="Body fat %" step="0.1" style="font-size:12px;padding:8px 6px">
+        <input type="number" class="form-input" id="w-sleep" placeholder="Sleep hrs" step="0.5" style="font-size:12px;padding:8px 6px">
+      </div>
+      <div class="weight-row" style="border-bottom:2px solid var(--border);font-weight:600;font-size:11px">
+        <span>Date</span><span>Weight</span><span>BF%</span><span>Sleep</span><span>Energy</span>
+      </div>
+      ${wHtml}
+    </div>
+    <div class="card">
+      <div class="card-title">💾 Data & Backup</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;line-height:1.4">
+        All your data lives on <b>this device</b>. It stays here even if you close this page. Use Export to save a backup file — you can transfer it to another device and import it there.
+      </p>
+      <button class="btn-primary" onclick="exportData()" style="margin-bottom:4px">⬇ Export Backup File</button>
+      <button class="btn-secondary" onclick="document.getElementById('importFile').click()">⬆ Restore from Backup</button>
+    </div>
+    <div class="card" style="font-size:11px;color:var(--text-dim);text-align:center;">
+      ${db.sessions.length} sessions · ${db.techniques.length} techniques · ${db.goals.length} goals · ${sizeKb} KB used
+    </div>
+  `;
+}
+
+function logWeight() {
+  const date = document.getElementById('w-date').value || todayStr();
+  const weight = parseFloat(document.getElementById('w-weight').value);
+  if (!weight) { showToast('Enter a weight'); return; }
+  const db = getDB();
+  db.weightEntries.push({id:genId(),date,weight,bf:parseFloat(document.getElementById('w-bf').value)||null,sleep:parseFloat(document.getElementById('w-sleep').value)||null,energy:'',timestamp:Date.now()});
+  saveDB(db);
+  document.getElementById('w-weight').value = '';
+  document.getElementById('w-bf').value = '';
+  document.getElementById('w-sleep').value = '';
+  renderMore();
+  showToast('Weight logged ✓');
+}
+
+// ===== MODAL =====
+function showModal(html) { document.getElementById('modalContent').innerHTML = html; document.getElementById('modalOverlay').classList.add('show'); }
+function hideModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+document.getElementById('modalOverlay').addEventListener('click', function(e){if(e.target===this)hideModal();});
+
+// ===== ADD TECHNIQUE =====
+function showAddTech() {
+  showModal(`
+    <h3>➕ Add Technique</h3>
+    <div class="form-group"><label class="form-label">Technique Name</label><input type="text" class="form-input" id="modal-tech-name" placeholder="e.g. Kimura"></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <select class="form-select" id="modal-tech-cat">
+        <option>Submissions</option><option>Sweeps</option><option>Passing</option><option>Escapes</option><option>Takedowns</option><option>Leg Locks</option><option>Guard</option>
+      </select></div>
+    <div class="form-group"><label class="form-label">Difficulty</label>
+      <select class="form-select" id="modal-tech-diff">
+        <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+      </select></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:14px;cursor:pointer">
+      <input type="checkbox" id="modal-tech-game"> ⭐ Part of my game
+    </label>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideModal()" style="flex:1">Cancel</button>
+      <button class="btn-primary" onclick="submitAddTech()" style="flex:2">Add</button>
+    </div>
+  `);
+  setTimeout(()=>document.getElementById('modal-tech-name')?.focus(),200);
+}
+function submitAddTech() {
+  const name = document.getElementById('modal-tech-name')?.value?.trim();
+  if (!name) { showToast('Enter a technique name'); return; }
+  const db = getDB();
+  db.techniques.push({id:genId(),name,category:document.getElementById('modal-tech-cat').value,difficulty:document.getElementById('modal-tech-diff').value,partOfMyGame:document.getElementById('modal-tech-game').checked,notes:''});
+  saveDB(db); hideModal(); renderTechniques(); showToast('Technique added ✓');
+}
+
+// ===== ADD GOAL =====
+function showAddGoal() {
+  showModal(`
+    <h3>🎯 Add Goal</h3>
+    <div class="form-group"><label class="form-label">What's your goal?</label><input type="text" class="form-input" id="modal-goal-name" placeholder="e.g. Get blue belt"></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <select class="form-select" id="modal-goal-cat">
+        <option>Technique</option><option>Competition</option><option>Consistency</option><option>Conditioning</option><option>Rank Progression</option>
+      </select></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideModal()" style="flex:1">Cancel</button>
+      <button class="btn-primary" onclick="submitAddGoal()" style="flex:2">Add</button>
+    </div>
+  `);
+  setTimeout(()=>document.getElementById('modal-goal-name')?.focus(),200);
+}
+function submitAddGoal() {
+  const name = document.getElementById('modal-goal-name')?.value?.trim();
+  if (!name) { showToast('Enter a goal'); return; }
+  const db = getDB();
+  db.goals.push({id:genId(),name,category:document.getElementById('modal-goal-cat').value,status:'In Progress'});
+  saveDB(db); hideModal(); renderMore(); showToast('Goal added ✓');
+}
+
+// ===== SESSION =====
+function deleteSession(id) { const db = getDB(); db.sessions = db.sessions.filter(s=>s.id!==id); saveDB(db); renderDashboard(); showToast('Session deleted'); }
+function selectQuick(el, group) { document.querySelectorAll(`#${group} .quick-btn`).forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); }
+
+function logSession() {
+  const typeEl = document.querySelector('#log-type .quick-btn.selected');
+  if (!typeEl) { showToast('Select a session type'); return; }
+  const db = getDB();
+  db.sessions.push({
+    id: genId(),
+    type: typeEl.dataset.value,
+    date: document.getElementById('log-date').value || todayStr(),
+    duration: parseInt(document.getElementById('log-duration').value) || 60,
+    intensity: document.querySelector('#log-intensity .quick-btn.selected')?.dataset?.value || 'Moderate',
+    rounds: parseInt(document.getElementById('log-rounds').value) || 0,
+    tapsGot: parseInt(document.getElementById('log-taps').value) || 0,
+    tapped: parseInt(document.getElementById('log-tapped').value) || 0,
+    position: document.getElementById('log-position').value,
+    partner: document.getElementById('log-partner').value,
+    techniques: document.getElementById('log-techniques').value,
+    notes: document.getElementById('log-notes').value,
+    timestamp: Date.now()
+  });
+  saveDB(db);
+  document.getElementById('log-rounds').value = '6';
+  ['log-taps','log-tapped','log-partner','log-techniques','log-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('log-date').value = todayStr();
+  showToast(`${typeEl.dataset.value} logged!`);
+}
+
+// ===== TABS =====
+function switchTab(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelector(`.tab[data-tab="${name}"]`).classList.add('active');
+  if (name==='dashboard') renderDashboard();
+  else if (name==='techniques') renderTechniques();
+  else if (name==='more') renderMore();
+}
+
+// ===== EXPORT / IMPORT =====
+function exportData() {
+  const db = getDB();
+  const blob = new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`grappler-dashboard-backup-${todayStr()}.json`;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},200);
+  showToast('Backup downloaded ✓');
+}
+function importData(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const d = JSON.parse(e.target.result);
+      if(!d.sessions){showToast('Invalid backup file');return;}
+      // Merge: keep existing data by default, add imported data
+      const db = getDB();
+      if (confirm('Add imported data to existing data? Cancel to replace everything.')) {
+        db.sessions = [...db.sessions, ...d.sessions];
+        db.techniques = [...db.techniques, ...(d.techniques||[])];
+        db.goals = [...db.goals, ...(d.goals||[])];
+        db.weightEntries = [...(db.weightEntries||[]), ...(d.weightEntries||[])];
+      } else {
+        Object.assign(db, d);
+      }
+      saveDB(db);
+      renderDashboard();
+      showToast('Data restored ✓');
+    } catch(err) { showToast('Could not read file'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ===== INSTALL HELP =====
+function showInstallHelp() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+  let html = '<h3>📱 Install on Your Phone</h3>';
+  if (isIOS) {
+    html += `<p style="font-size:14px;color:var(--text-dim);margin-bottom:10px;line-height:1.6">
+      <b>1.</b> Tap the <b>Share button</b> <span style="font-size:18px">⎙</span> at the bottom of Safari<br><br>
+      <b>2.</b> Scroll down and tap <b>"Add to Home Screen"</b><br><br>
+      <b>3.</b> Tap <b>"Add"</b> (top right)<br><br>
+      <span style="color:var(--text)">It will appear as an app icon on your home screen. Opens full-screen like a real app!</span>
+    </p>`;
+  } else if (isAndroid) {
+    html += `<p style="font-size:14px;color:var(--text-dim);margin-bottom:10px;line-height:1.6">
+      <b>1.</b> Open this page in <b>Chrome</b><br><br>
+      <b>2.</b> Tap the <b>three-dot menu</b> <span style="font-size:18px">⋮</span> in the top right<br><br>
+      <b>3.</b> Tap <b>"Add to Home screen"</b><br><br>
+      <span style="color:var(--text)">It will appear as an app icon on your home screen. Opens full-screen like a real app!</span>
+    </p>`;
+  } else {
+    html += '<p style="font-size:14px;color:var(--text-dim);margin-bottom:10px;line-height:1.6">On desktop: Bookmark this page.<br>On mobile: Use "Add to Home Screen" from your browser menu to open it like an app.</p>';
+  }
+  showModal(html + '<button class="btn-primary" onclick="hideModal()" style="margin-top:8px">Got it! ✅</button>');
+}
+
+// ===== TOAST =====
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ===== FILE PROTOCOL DETECTION =====
+function isMobile() { return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); }
+function isFileProtocol() { return window.location.protocol === 'file:'; }
+
+function showFileWarning() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const platform = isIOS ? 'iPhone' : 'Android';
+  showModal(`
+    <div style="text-align:center">
+      <div style="font-size:48px;margin-bottom:10px">📱</div>
+      <h3 style="margin-bottom:6px">Open in Your Browser</h3>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;line-height:1.5">
+        This file works best when opened in Safari${!isIOS ? '/Chrome' : ''} — not in the Files app or your download manager.
+      </p>
+    </div>
+    <div style="background:var(--surface);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">${isIOS ? 'On iPhone:' : 'On Android:'}</div>
+      <div style="font-size:13px;color:var(--text-dim);line-height:1.7">
+        <b>1.</b> Close this window<br>
+        <b>2.</b> Open <b>Safari${!isIOS ? '/Chrome' : ''}</b> on your phone<br>
+        <b>3.</b> Go to your Downloads / Files<br>
+        <b>4.</b> Tap <b>"grappler-dashboard.html"</b> — it will open in Safari${!isIOS ? '/Chrome' : ''}<br><br>
+        <span style="color:var(--text)">Then tap "Add to Home Screen" to use it like an app.</span>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="hideModal()">Got it! ✅</button>
+  `);
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', function() {
+  loadSamples();
+  const di = document.getElementById('log-date');
+  if (di) di.value = todayStr();
+  if (isFirstTime()) {
+    renderDashboard();
+    if (isMobile() && isFileProtocol()) {
+      setTimeout(showFileWarning, 500);
+    } else {
+      setTimeout(showWelcome, 300);
+    }
+  } else {
+    renderDashboard();
+  }
+});
+</script>
+</body>
+</html>
